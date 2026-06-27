@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Tasks - Premium Task Manager</title>
+    <meta name="description" content="Aether Tasks is a premium, glassmorphic Task Manager designed for streamlined productivity and task organization. Built with FastAPI and SQLAlchemy.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background Decor Elements -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="sidebar-navigation">
+            <div class="sidebar-header">
+                <div class="app-logo">
+                    <div class="logo-icon"><i class="fa-solid fa-compass-drafting"></i></div>
+                    <span class="logo-text">AETHER</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <div class="menu-section-label">Task Management</div>
+                <button class="menu-item active" id="btn-filter-all" onclick="filterBy('all')">
+                    <i class="fa-solid fa-list-check"></i> <span>All Tasks</span>
+                </button>
+                <button class="menu-item" id="btn-filter-todo" onclick="filterBy('todo')">
+                    <i class="fa-regular fa-circle-play"></i> <span>To Do</span>
+                </button>
+                <button class="menu-item" id="btn-filter-progress" onclick="filterBy('in_progress')">
+                    <i class="fa-solid fa-spinner"></i> <span>In Progress</span>
+                </button>
+                <button class="menu-item" id="btn-filter-completed" onclick="filterBy('completed')">
+                    <i class="fa-regular fa-circle-check"></i> <span>Completed</span>
+                </button>
+                
+                <div class="menu-section-label">Priority Filter</div>
+                <button class="menu-item" id="btn-priority-high" onclick="filterPriority('high')">
+                    <i class="fa-solid fa-circle-exclamation text-high"></i> <span>High Priority</span>
+                </button>
+                <button class="menu-item" id="btn-priority-medium" onclick="filterPriority('medium')">
+                    <i class="fa-solid fa-circle-exclamation text-medium"></i> <span>Medium Priority</span>
+                </button>
+                <button class="menu-item" id="btn-priority-low" onclick="filterPriority('low')">
+                    <i class="fa-solid fa-circle-exclamation text-low"></i> <span>Low Priority</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary btn-block" id="btn-new-task-sidebar" onclick="openCreateModal()">
+                    <i class="fa-solid fa-plus"></i> New Task
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="app-main-content">
+            <!-- Header Bar -->
+            <header class="app-header">
+                <div class="header-welcome">
+                    <h1 class="header-title" id="page-title-heading">Aether Workspace</h1>
+                    <p class="header-subtitle">Organize, monitor, and master your tasks.</p>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="search-bar-container">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search tasks by title or content..." oninput="handleSearch(this.value)">
+                    </div>
+                    
+                    <div class="view-toggles">
+                        <button class="view-toggle-btn active" id="btn-view-kanban" onclick="setViewMode('kanban')" title="Kanban Board">
+                            <i class="fa-solid fa-table-columns"></i>
+                        </button>
+                        <button class="view-toggle-btn" id="btn-view-list" onclick="setViewMode('list')" title="List View">
+                            <i class="fa-solid fa-list-ul"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Analytics Panel -->
+            <section class="analytics-row" id="analytics-panel">
+                <div class="analytics-card card-total">
+                    <div class="analytics-info">
+                        <span class="analytics-label">Total Tasks</span>
+                        <h2 class="analytics-value" id="stats-total">0</h2>
+                    </div>
+                    <div class="analytics-icon"><i class="fa-solid fa-briefcase"></i></div>
+                </div>
+                
+                <div class="analytics-card card-todo">
+                    <div class="analytics-info">
+                        <span class="analytics-label">Pending</span>
+                        <h2 class="analytics-value" id="stats-todo">0</h2>
+                    </div>
+                    <div class="analytics-icon"><i class="fa-regular fa-clock"></i></div>
+                </div>
+                
+                <div class="analytics-card card-progress">
+                    <div class="analytics-info">
+                        <span class="analytics-label">In Progress</span>
+                        <h2 class="analytics-value" id="stats-progress">0</h2>
+                    </div>
+                    <div class="analytics-icon"><i class="fa-solid fa-gears"></i></div>
+                </div>
+                
+                <div class="analytics-card card-completed">
+                    <div class="analytics-info">
+                        <span class="analytics-label">Completed</span>
+                        <h2 class="analytics-value" id="stats-completed">0</h2>
+                    </div>
+                    <div class="analytics-icon"><i class="fa-regular fa-square-check"></i></div>
+                </div>
+            </section>
+
+            <!-- Kanban Board Content (Default View) -->
+            <section class="board-view" id="workspace-kanban-view">
+                <div class="kanban-column" id="column-todo" data-status="todo" ondragover="allowDrop(event)" ondrop="drop(event, 'todo')">
+                    <div class="column-header">
+                        <div class="column-title-wrapper">
+                            <span class="status-indicator indicator-todo"></span>
+                            <h3 class="column-title">To Do</h3>
+                            <span class="column-badge" id="badge-todo">0</span>
+                        </div>
+                        <button class="btn-column-add" id="btn-add-todo" onclick="openCreateModal('todo')" title="Add task to To Do">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="task-list-container drag-zone" id="tasks-todo">
+                        <!-- Dynamic Cards Inserted Here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column" id="column-progress" data-status="in_progress" ondragover="allowDrop(event)" ondrop="drop(event, 'in_progress')">
+                    <div class="column-header">
+                        <div class="column-title-wrapper">
+                            <span class="status-indicator indicator-progress"></span>
+                            <h3 class="column-title">In Progress</h3>
+                            <span class="column-badge" id="badge-progress">0</span>
+                        </div>
+                        <button class="btn-column-add" id="btn-add-progress" onclick="openCreateModal('in_progress')" title="Add task to In Progress">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="task-list-container drag-zone" id="tasks-progress">
+                        <!-- Dynamic Cards Inserted Here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column" id="column-completed" data-status="completed" ondragover="allowDrop(event)" ondrop="drop(event, 'completed')">
+                    <div class="column-header">
+                        <div class="column-title-wrapper">
+                            <span class="status-indicator indicator-completed"></span>
+                            <h3 class="column-title">Completed</h3>
+                            <span class="column-badge" id="badge-completed">0</span>
+                        </div>
+                        <button class="btn-column-add" id="btn-add-completed" onclick="openCreateModal('completed')" title="Add task to Completed">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="task-list-container drag-zone" id="tasks-completed">
+                        <!-- Dynamic Cards Inserted Here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- List View Content (Hidden by default) -->
+            <section class="list-view hidden" id="workspace-list-view">
+                <div class="list-view-header">
+                    <div class="col-title">Task Detail</div>
+                    <div class="col-status">Status</div>
+                    <div class="col-priority">Priority</div>
+                    <div class="col-due">Due Date</div>
+                    <div class="col-actions">Actions</div>
+                </div>
+                <div class="list-items-container" id="list-items-wrapper">
+                    <!-- Dynamic List Rows Inserted Here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create/Edit Task Dialog Modal -->
+    <div class="modal-overlay" id="task-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-heading-title">Create New Task</h3>
+                <button class="modal-close-btn" id="btn-close-modal" onclick="closeModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="task-form" onsubmit="saveTask(event)">
+                <input type="hidden" id="form-task-id">
+                
+                <div class="form-group">
+                    <label for="form-title" class="form-label">Task Title <span class="required-star">*</span></label>
+                    <input type="text" id="form-title" class="form-input" placeholder="e.g., Design Landing Page" required maxlength="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-description" class="form-label">Description</label>
+                    <textarea id="form-description" class="form-input form-textarea" placeholder="Add some details about the task requirements..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="form-status" class="form-label">Status</label>
+                        <select id="form-status" class="form-input form-select">
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group col-6">
+                        <label for="form-priority" class="form-label">Priority</label>
+                        <select id="form-priority" class="form-input form-select">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="form-due-date" class="form-label">Due Date</label>
+                    <input type="datetime-local" id="form-due-date" class="form-input">
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-task" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-task">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Area -->
+    <div class="toast-container" id="toast-container-wrapper"></div>
+
+    <!-- Main Application Scripts -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
